@@ -4,5 +4,5 @@
 Please find your account statement attached.
 
 Thanks,<br>
-{{ config('app.name') }}
+{{ config('app.school_name') }}
 </x-mail::message>

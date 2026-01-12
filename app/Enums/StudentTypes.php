@@ -7,7 +7,7 @@ enum StudentTypes : string
     case COURSE_A = 'Course A';
     case COURSE_B = 'Course B';
     case COURSE_C = 'Course C';
-    case LXL = 'Lesson by Lesson';
+    case LXL = 'BTW Only';
     case POINT_REDUCTION = 'Point Reduction';
     case INSTRUCTOR_TRAINING = 'Instructor Training';
     case DRIVER_EVALUATION = 'Driver Evaluation';
@@ -26,7 +26,7 @@ enum StudentTypes : string
             static::POINT_REDUCTION => 'Point Reduction',
             static::ROAD_TESTING => 'Road Test Only',
             static::PERMIT_TESTING => 'Permit Test Only',
-            static::LXL => 'LxL',
+            static::LXL => 'BTW Only',
             static::LxL => 'LxL',
             static::INSTRUCTOR_TRAINING => 'Instructor Training',
             static::DRIVER_EVALUATION => 'Driver Evaluation',
@@ -45,8 +45,8 @@ enum StudentTypes : string
             static::POINT_REDUCTION => 'Point Reduction',
             static::ROAD_TESTING => 'Road Test Only',
             static::PERMIT_TESTING => 'Permit Test Only',
-            static::LXL => 'Lesson by Lesson',
-            static::LxL => 'Lesson by Lesson',
+            static::LXL => 'Behind the Wheel Lessons',
+            static::LxL => 'Behind the Wheel Lessons',
         };
     }
 

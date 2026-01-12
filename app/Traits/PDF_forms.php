@@ -44,7 +44,6 @@ trait PDF_forms
 
         $lineHeight = 97;
         //  Lesson Data
-        $counter = 1;
         foreach ($student->ascLessons as $lesson)
         {
             $pdf->WriteText(19, $lineHeight, $lesson->start_time->format('m/d/Y') ?? '');
@@ -55,29 +54,6 @@ trait PDF_forms
             $pdf->WriteText(144, $lineHeight, strval($lesson->end_mileage) ?: 'N/A');
             $pdf->WriteText(168, $lineHeight, $lesson->vehicle->tag_number ?? 'N/A');
             $lineHeight += 11;
-
-            if (is_int($counter/7))
-            {
-                $pdf->AddPage();
-                $pdf->useTemplate($template);
-                $pdf->SetFont('freesans', 'bi', '11');
-
-                $lineHeight = 42;
-
-                $pdf->WriteText(57, $lineHeight, config('app.school_name'));
-                $pdf->WriteText(175, $lineHeight, $student->contract_name);
-
-                $lineHeight = 52;
-
-                $pdf->WriteText(55, $lineHeight, $student->permit_number ?? '');
-                $pdf->WriteText(170, $lineHeight, $student->dob->format('m/d/Y') ?? 'Permit #');
-
-                $lineHeight = 97;
-
-            }
-
-
-            $counter++;
         }
 
         return $pdf;
@@ -153,19 +129,8 @@ trait PDF_forms
     {
         $charges = $student->charges;
         $payments = $student->payments;
-        $transactions = new Collection();
-
-        foreach ($charges as $charge)
-        {
-            $transactions->push(['remarks' => $charge->reason, 'amount' => $charge->amount, 'date' => $charge->entered->format('m/d/Y'), 'type' => 'charge']);
-        }
-
-        foreach ($payments as $payment)
-        {
-            $transactions->push(['remarks' => $payment->remarks, 'amount' => $payment->amount, 'date' => $payment->date->format('m/d/Y'), 'type' => 'payment']);
-        }
-
-        $sorted_transactions = $transactions->sortBy(['date', 'type']);
+        $transactions = $charges->merge($payments);
+        $transactions->sortBy('created_at');
 
         $pdf = new Mpdf(['default_font' => 'sans-serif', 'default_font_size' => '11', 'default_font_style' => 'b']);
         $pdf->setSourceFile(public_path('/forms/account_statement.pdf'));
@@ -175,21 +140,44 @@ trait PDF_forms
 
         $lineHeight = 115;
         $running_balance = 0;
-        foreach ($sorted_transactions as $trans)
+        foreach ($transactions as $trans)
         {
-            if ($trans['type'] === 'charge')
+            if ($trans instanceof Charge)
             {
-                $pdf->writeText(15, $lineHeight, $trans['date']);
-                $pdf->writeText(42, $lineHeight, $trans['remarks'] ?: '');
-                $pdf->writeText(115, $lineHeight, money($trans['amount']));
-                $running_balance += $trans['amount'];
+                $pdf->writeText(15, $lineHeight, carbon($trans->entered)->format('m/d/Y'));
+
+                $remarks = match ($trans->reason) {
+                    'Course A' => 'Basic (8 Hrs Class + 6 Hrs BTW)',
+                    'Course A Enrollment' => 'Basic (8 Hrs Class + 6 Hrs BTW)',
+                    'Course B' => 'Plus (8 Hrs Class + 8 Hrs BTW)',
+                    'Course B Enrollment' => 'Plus (8 Hrs Class + 8 Hrs BTW)',
+                    'Course C' => 'Premium (8 Hrs Class + 10 Hrs BTW)',
+                    'Course C Enrollment' => 'Premium (8 Hrs Class + 10 Hrs BTW)',
+                    'BTW Only - 2 hours' => $trans->reason,
+                    'BTW Only - 4 hours' => $trans->reason,
+                    'BTW Only - 6 hours' => $trans->reason,
+                    'Road Test' => $trans->reason,
+                    'Road Test Enrollment' => $trans->reason,
+                    'Skills Test Enrollment' => $trans->reason,
+                    'Point Reduction' => $trans->reason,
+                    'Mature Operator Enrollment' => $trans->reason,
+                    'Insurance Reduction' => $trans->reason,
+                    'DIP Driver Improvement' => $trans->reason,
+                    'NSF Fee' => $trans->reason,
+                    'Document Fee' => $trans->reason,
+                    default => $trans->reason,
+                };
+
+                $pdf->writeText(42, $lineHeight, $remarks);
+                $pdf->writeText(115, $lineHeight, money($trans->amount));
+                $running_balance += $trans->amount;
                 $pdf->writeText(168, $lineHeight, money($running_balance));
-            } elseif ($trans['type'] === 'payment')
+            } elseif ($trans instanceof Payment)
             {
-                $pdf->writeText(15, $lineHeight, $trans['date']);
-                $pdf->writeText(42, $lineHeight, $trans['remarks'] ?: '');
-                $pdf->writeText(142, $lineHeight, money($trans['amount']));
-                $running_balance -= $trans['amount'];
+                $pdf->writeText(15, $lineHeight, carbon($trans->date)->format('m/d/Y'));
+                $pdf->writeText(42, $lineHeight, $trans->remarks);
+                $pdf->writeText(142, $lineHeight, money($trans->amount));
+                $running_balance -= $trans->amount;
                 $pdf->writeText(168, $lineHeight, money($running_balance));
             }
             $lineHeight += 6.5;
@@ -226,6 +214,131 @@ trait PDF_forms
         return $pdf;
     }
 
+    public function class_contracts(Seminar $seminar)
+    {
+        $students = $seminar->students;
+        $pdf = self::create_pdf_file('P');
+        $pdf->setSourceFile(public_path('templates/beginner_contract_reconfigured.pdf'));
+        $template = $pdf->ImportPage(1);
+        $page2 = $pdf->ImportPage(2);
+
+        foreach ($students as $student)
+        {
+            switch ($student->type)
+            {
+                case 'DIP':
+                case 'Point Reduction':
+                    $pdf->AddPage();
+                    $pdf->useTemplate($template);
+
+                    $pdf->SetFont('freesans', 'bi', '9');
+
+                    self::add_prices_to_contract($pdf);
+
+                    $pdf->WriteText(46, 35.5, Carbon::now()->format('M d, Y'));
+                    if ($seminar->title) {
+                        $pdf->WriteText(135, 35.5, $seminar->title);
+                    } else {
+                        $pdf->WriteText(135, 35.5, $seminar->date->format('M d, Y '));
+                    }
+                    $pdf->WriteText(53, 43.5, $seminar->classroom->contract_address);
+
+                    $pdf->WriteText(178, 55, $student->username ?: '');
+                    $pdf->WriteText(30, 66, $student->contract_name);
+
+                    $pdf->WriteText(140, 66, $student->display_birthdate ?: 'DOB');
+                    $pdf->WriteText(35, 81, $student->contract_address);
+
+                    $pdf->WriteText(135, 94, phone($student->student_phone));
+
+
+                    $pdf->WriteText(66, 116.8, $student->parent_name ?: '');
+                    $pdf->WriteText(153, 117, phone($student->phone));
+                    $pdf->WriteText(52, 136, $student->parent_name_alternate ?: '');
+                    $pdf->WriteText(153, 136, phone($student->secondary_phone));
+                    $pdf->WriteText(63, 122, $student->email ?: '');
+
+                    $pdf->WriteText(55, 160.5, $student->permit_number ?: '');
+                    $pdf->WriteText(165, 160.5, $student->display_issue_date);
+
+                    $pdf->SetFontSize(13);
+                    $pdf->WriteText(15.5, 173, 'XX');
+
+                    break;
+                case 'Insurance Discount':
+
+                    break;
+                default:
+                    $pdf->AddPage();
+                    self::process_signature_image($student);
+
+
+                    $pdf->useTemplate($template);
+                    $pdf->SetFont('freesans', 'bi', '9');
+
+                    $pdf->WriteText(46, 53.5, Carbon::now()->format('M d, Y'));
+                    if ($seminar->title) {
+                        $pdf->WriteText(130, 53.5, $seminar->title);
+                    } else {
+                        $pdf->WriteText(174, 53.5, $seminar->date->format('M d, Y '));
+                    }
+
+                    $pdf->WriteText(178, 15, $student->username ?: '');
+                    $pdf->WriteText(30, 77.5, $student->contract_name);
+                    $pdf->WriteText(150, 77.5, $student->goes_by ?: '');
+                    $pdf->WriteText(32, 89, $student->gender ?: '');
+                    $pdf->WriteText(176, 89, $student->display_birthdate . " ($student->age)");
+                    $pdf->WriteText(35, 99.5, $student->contract_address);
+                    $pdf->WriteText(32, 110, $student->email_student ?: '');
+                    //$pdf->WriteText(41, 120, $student->high_school ?: '');
+                    $pdf->WriteText(150, 120, $student->neighborhood ?: '');
+                    $pdf->WriteText(50, 130, phone($student->student_phone));
+
+                    $pdf->WriteText(40, 152.5, $student->parent_name ?: '');
+                    $pdf->WriteText(30, 159, phone($student->phone));
+                    $pdf->WriteText(141, 152.5, $student->parent_name_alternate ?: '');
+                    $pdf->WriteText(143, 168, $student->parent_email_alternate ?: '');
+                    $pdf->WriteText(136, 159, phone($student->secondary_phone));
+                    $pdf->WriteText(42, 168, $student->email ?: '');
+
+
+                    $pdf->WriteText(53, 199, $student->permit_number ?: '');
+                    $pdf->WriteText(121, 199, $student->display_issue_date ?: '');
+
+                    $pdf->WriteText(184, 199, $student->eligible_date);
+
+
+                    //$pdf->SetFont('dejavusans');
+
+                    $pdf->SetXY(16, 247);
+                    $pdf->WriteCell(184, 0, config("safeds.student_type_labels.$student->type"), 0, 0, 'C');
+                    $pdf->SetXY(16, 252);
+                    $pdf->WriteCell(184, 0, 'Tuition: ' . money($student->charges()->latest()->first()->amount), 0, 0, 'C');
+                    $pdf->SetXY(16, 257);
+                    $pdf->WriteCell(184, 0, 'Balance: ' . money($student->balance), 0, 0, 'C');
+
+
+                    //$pdf->SetFont('dejavusans', 'b');
+
+                    $pdf->AddPage();
+                    $pdf->useTemplate($page2);
+                    $pdf->SetFont('freesans', 'bi', '9');
+//        if (file_exists(storage_path() . "/app/public/signatures/$student->id.png"))
+//        {
+//            $pdf->Image(storage_path() . "/app/public/signatures/$student->id.png", 130, 235, 60, 20);
+//        }
+//
+//        $pdf->WriteText(120, 259, $student->printed_signature ?: '');
+                    //$pdf->WriteText(36, 259, $student->contract_name);
+                    $pdf->WriteText(28, 263, now()->format('m/d/Y'));
+                    $pdf->WriteText(112, 263, now()->format('m/d/Y'));
+
+                    break;
+            }
+        }
+        return $pdf;
+    }
+
     public function completion_cert(Student $student)
     {
         $pdf = self::create_pdf_file('L', 'Letter');
@@ -240,9 +353,9 @@ trait PDF_forms
         $pdf->setFont('sans-serif', 'B', 10);
         if ($student->instructor)
         {
-            $pdf->writeText(102, 169.25, optional($student->instructor)->scheduler_name ?: '');
+            $pdf->writeText(102, 169.25, optional($student->instructor)->name ?: '');
             $pdf->setFont('dancingscript', 'B', 26);
-            $pdf->writeText(89, 161, optional($student->instructor)->scheduler_name ?: '');
+            $pdf->writeText(89, 161, optional($student->instructor)->name ?: '');
         } else {
             $pdf->writeText(102, 169.25, config('app.certificate_name') ?: '');
             $pdf->setFont('dancingscript', 'B', 26);
@@ -268,62 +381,28 @@ trait PDF_forms
 
     }
 
-    public function instructor_certificate(Student $student)
-    {
-        $pdf = self::create_pdf_file('L', 'A4');
-        $pdf->setSourceFile(public_path('forms/instructor_certificate.pdf'));
-        $template = $pdf->importPage(1);
-        $pdf->useTemplate($template);
-        $pdf->setXY(52, 85);
-        $pdf->AutosizeText($student->contract_name, 172, 'tangerine', 'B');
-
-
-        $pdf->setFont('sans-serif', 'B', 10);
-        $pdf->writeText(102, 169.25, config('app.certificate_name') ?: '');
-        $pdf->setFont('dancingscript', 'B', 26);
-        $pdf->writeText(89, 161, config('app.certificate_name') ?: '');
-
-        $pdf->setFont('sans-serif', 'B', 14);
-        $pdf->writeText(40, 168, optional($student->date_completed)->format('m/d/Y') ?: '');
-        // Logo
-        if (config('app.logo'))
-        {
-            $pdf->Image(asset('images/logos/' . config('app.logo')), 170, 145, 0, 20, 'svg');
-        } else {
-            $pdf->WriteText(170, 170, config('app.school_name'));
-        }
-        $pdf->setFont('sans-serif', 'R', 8);
-        $pdf->WriteText(170, 175, config('app.school_street') ?? '');
-        $pdf->WriteText(170, 179, config('app.school_csz') ?? '');
-        $pdf->WriteText(170, 183, config('app.school_phone') ?? '');
-        $pdf->WriteText(170, 187, config('app.school_email') ?? '');
-
-
-        return $pdf;
-    }
-
-    public function kia_cert(Student $student)
-    {
-        $pdf = self::create_pdf_file('L', 'Letter');
-        $pdf->setSourceFile(public_path('forms/gift_certificate.pdf'));
-        $template = $pdf->importPage(1);
-        $pdf->useTemplate($template);
-        $pdf->setXY(85, 89);
-        $pdf->AutosizeText($student->contract_name, 113, 'freesans', 'B');
-
-        $pdf->SetFont('freesans', 'B', 14);
-        $lineHeight = 130;
-        $pdf->WriteText(121, $lineHeight, $student->date_completed->format('d'));
-        $pdf->WriteText(146, $lineHeight, $student->date_completed->format('F'));
-        $pdf->WriteText(184, $lineHeight, $student->date_completed->format('y'));
-
-        return $pdf;
-    }
+//    public function kia_cert(Student $student)
+//    {
+//        $pdf = self::create_pdf_file('L', 'Letter');
+//        $pdf->setSourceFile(public_path('forms/gift_certificate.pdf'));
+//        $template = $pdf->importPage(1);
+//        $pdf->useTemplate($template);
+//        $pdf->setXY(85, 89);
+//        $pdf->AutosizeText($student->contract_name, 113, 'freesans', 'B');
+//
+//        $pdf->SetFont('freesans', 'B', 14);
+//        $lineHeight = 130;
+//        $pdf->WriteText(121, $lineHeight, $student->date_completed->format('d'));
+//        $pdf->WriteText(146, $lineHeight, $student->date_completed->format('F'));
+//        $pdf->WriteText(184, $lineHeight, $student->date_completed->format('y'));
+//
+//        return $pdf;
+//    }
 
     public function coversheet(Student $student)
     {
         $pdf = self::create_pdf_file('L');
-        $pdf->setSourceFile(public_path('/forms/coversheet.pdf'));
+        $pdf->setSourceFile(public_path('/templates/coversheet.pdf'));
         $template = $pdf->ImportPage(1);
         $pdf->useTemplate($template);
 
@@ -335,7 +414,7 @@ trait PDF_forms
         $pdf->WriteText(50, 18, "DOB: " . $student->display_birthdate);
         $pdf->WriteText(50,26, "Gender: " . $student->gender);
         $pdf->SetXY(230, 10);
-        $pdf->WriteCell(20,0,$student->status->label(),0,0,'r');
+        $pdf->WriteCell(20,0,$student->status,0,0,'r');
         $pdf->WriteText(230, 17, $student->display_completion_date);
 
         $pdf->WriteText(245, 26, money($student->balance));
@@ -419,7 +498,7 @@ trait PDF_forms
     {
         $students = $seminar->students;
         $pdf = self::create_pdf_file('L');
-        $pdf->setSourceFile(public_path('/forms/coversheet.pdf'));
+        $pdf->setSourceFile(public_path('/templates/coversheet.pdf'));
         $template = $pdf->ImportPage(1);
 //        $pdf->useTemplate($template);
 //
@@ -436,7 +515,7 @@ trait PDF_forms
             $pdf->WriteText(50, 18, "DOB: " . $student->display_birthdate);
             $pdf->WriteText(50,26, "Gender: " . $student->gender);
             $pdf->SetXY(230, 10);
-            $pdf->WriteCell(20,0,$student->status->label(),0,0,'r');
+            $pdf->WriteCell(20,0,$student->status,0,0,'r');
             $pdf->WriteText(230, 17, $student->display_completion_date);
 
             $pdf->WriteText(245, 26, money($student->balance));
@@ -505,7 +584,7 @@ trait PDF_forms
             foreach($student->lessons as $lesson)
             {
                 $pdf->WriteText(7, $lineHeight, $lesson->start_time->format('m/d/y'));
-                $pdf->WriteText(28, $lineHeight, $lesson->type ?: '');
+                $pdf->WriteText(28, $lineHeight, $lesson->type);
                 $pdf->WriteText(60, $lineHeight, $lesson->start_time->format('h:i a'));
                 $pdf->WriteText(102, $lineHeight, $lesson->end_time->format('h:i a'));
                 $pdf->WriteText(157, $lineHeight, strval($lesson->mileage));
@@ -522,56 +601,68 @@ trait PDF_forms
         self::process_signature_image($student);
 
         $pdf = new Mpdf(['default_font' => 'sans-serif', 'default_font_size' => '10', 'default_font_style' => 'b']);
-        $pdf->setSourceFile(public_path('/forms/contracts/student_packet.pdf'));
+        $pdf->setSourceFile(public_path('/templates/beginner_contract_reconfigured.pdf'));
         $template = $pdf->ImportPage(1);
         $pdf->useTemplate($template);
-        //$this->addLayoutGrid($pdf);
+        $pdf->SetFont('freesans', 'bi', '9');
 
-        $pdf->setFont('sans-serif', 'B', 10);
-
-        $pdf->writeText(50, 38, Carbon::now()->format('m/d/Y'));
-        $pdf->writeText(140, 38, $seminar->date->format('m/d/Y'));
-        $pdf->writeText(52, 48, $seminar->classroom->address);
-
-        // Student information
-        $pdf->writeText(30, 74, $student->contract_name);
-        $pdf->writeText(140, 74, $student->dob->format('m/d/Y') ." ($student->age)"  ?: '');
-        $pdf->writeText(35, 88, $student->contract_address);
-        if (isset($student->high_school)) {
-            $pdf->writeText(35, 101, $student->high_school);
+        $pdf->WriteText(46, 53.5, Carbon::now()->format('M d, Y'));
+        if ($seminar->title) {
+            $pdf->WriteText(130, 53.5, $seminar->title);
+        } else {
+            $pdf->WriteText(174, 53.5, $seminar->date->format('M d, Y '));
         }
-        $pdf->writeText(130, 101, phone($student->phone));
 
-        // Parent Information
-        $pdf->WriteText(66, 126, $student->parent_name ?: '');
-        $pdf->WriteText(154, 126, phone($student->phone) ?: 'N/a');
-        $pdf->WriteText(28, 131, $student->email ?: 'N/a');
-        $pdf->WriteText(52, 139.5, $student->parent_name_alternate ?: '');
-        $pdf->WriteText(154, 139.5, phone($student->secondary_phone) ?: '');
-        $pdf->WriteText(28, 144.5, $student->guardian_2_email ?: '');
+        $pdf->WriteText(178, 15, $student->username ?: '');
+        $pdf->WriteText(30, 77.5, $student->contract_name);
+        $pdf->WriteText(150, 77.5, $student->goes_by ?: '');
+        $pdf->WriteText(32, 89, $student->gender ?: '');
+        $pdf->WriteText(176, 89, $student->display_birthdate . " ($student->age)");
+        $pdf->WriteText(35, 99.5, $student->contract_address);
+        $pdf->WriteText(32, 110, $student->email_student ?: '');
+        //$pdf->WriteText(41, 120, $student->high_school ?: '');
+        $pdf->WriteText(150, 120, $student->neighborhood ?: '');
+        $pdf->WriteText(50, 130, phone($student->student_phone));
 
-        // Permit Information
-        $pdf->WriteText(56, 171.5, $student->permit_number ?: 'N/a');
-        $pdf->WriteText(160, 171.5, $student->display_issue_date ?: 'N/a');
+        $pdf->WriteText(40, 152.5, $student->parent_name ?: '');
+        $pdf->WriteText(30, 159, phone($student->phone));
+        $pdf->WriteText(141, 152.5, $student->parent_name_alternate ?: '');
+        $pdf->WriteText(143, 168, $student->parent_email_alternate ?: '');
+        $pdf->WriteText(136, 159, phone($student->secondary_phone));
+        $pdf->WriteText(42, 168, $student->email ?: '');
 
 
-        // Training Package Information
-        $pdf->writeText(63, 212.5, $student->type->extendedLabel()); // Course Level
-        $pdf->writeText(160, 212.5, @money($student->charges->last()->amount)); // Package Price
-        $pdf->writeText(187, 217.5, strval($student->type->carHours())); // Package BTW Hours
+        $pdf->WriteText(53, 199, $student->permit_number ?: '');
+        $pdf->WriteText(121, 199, $student->display_issue_date ?: '');
+
+        $pdf->WriteText(184, 199, $student->eligible_date);
 
 
-        $pdf->addPage();
+        //$pdf->SetFont('dejavusans');
+
+        $pdf->SetXY(16, 247);
+        $pdf->WriteCell(184, 0, $student->type->extendedLabel(), 0, 0, 'C');
+        $pdf->SetXY(16, 252);
+        $pdf->WriteCell(184, 0, 'Tuition: ' . money($student->charges()->latest()->first()->amount), 0, 0, 'C');
+        $pdf->SetXY(16, 257);
+        $pdf->WriteCell(184, 0, 'Balance: ' . money($student->balance), 0, 0, 'C');
+
+
+        //$pdf->SetFont('dejavusans', 'b');
+
+        $pdf->AddPage();
         $template = $pdf->ImportPage(2);
         $pdf->useTemplate($template);
         $pdf->SetFont('freesans', 'bi', '9');
-        if (file_exists(storage_path() . "/app/public/signatures/$student->id.png"))
-        {
-            $pdf->Image(storage_path() . "/app/public/signatures/$student->id.png", 68, 231, 60, 20);
-        }
-
-        $pdf->WriteText(42, 253.25, $student->printed_signature ?: '');
-        $pdf->WriteText(30, 259, Carbon::now()->format('m/d/Y'));
+//        if (file_exists(storage_path() . "/app/public/signatures/$student->id.png"))
+//        {
+//            $pdf->Image(storage_path() . "/app/public/signatures/$student->id.png", 130, 235, 60, 20);
+//        }
+//
+//        $pdf->WriteText(120, 259, $student->printed_signature ?: '');
+        //$pdf->WriteText(36, 259, $student->contract_name);
+        $pdf->WriteText(28, 263, now()->format('m/d/Y'));
+        $pdf->WriteText(112, 263, now()->format('m/d/Y'));
 
         return $pdf;
     }
@@ -627,49 +718,33 @@ trait PDF_forms
         self::process_signature_image($student);
 
         $pdf = new Mpdf(['default_font' => 'sans-serif', 'default_font_size' => '10', 'default_font_style' => 'b']);
-        $pdf->setSourceFile('forms/contracts/student_packet.pdf');
-        $template = $pdf->ImportPage(3);
+        $pdf->setSourceFile('templates/point_reduction_contract.pdf');
+        $template = $pdf->ImportPage(1);
+        $page2 = $pdf->ImportPage(2);
         $pdf->useTemplate($template);
-        $pdf->SetFont('freesans', 'bi', '9');
+        $pdf->SetFont('freesans', 'bi', '11');
 
-        $pdf->WriteText(69, 53.5, $student->contract_name);
-        $pdf->WriteText(149, 53.5, $student->dob->format('m/d/Y'));
-        $pdf->WriteText(72, 58, $student->contract_address);
-        $pdf->WriteText(26, 62.25, phone($student->student_phone));
-        $pdf->WriteText(155, 62.25, $student->permit_number ?: '');
+        $pdf->WriteText(44, 53.5, today()->format('m/d/Y'));
+        $pdf->WriteText(178, 53.5, $seminar->date->format('m/d/Y'));
+        $pdf->WriteText(27, 84, $student->contract_name);
+        $pdf->WriteText(123, 84, $student->goes_by ?: '');
+        $pdf->WriteText(180, 84, $student->dob->format('m/d/Y'));
+        $pdf->WriteText(30, 94.5, $student->contract_address);
+        $pdf->WriteText(105, 105, phone($student->student_phone));
+        $pdf->WriteText(55, 115.5, $student->permit_number ?: '');
+        $pdf->WriteText(40, 125, $student->email_student ?: '');
+        $pdf->WriteText(170, 125, $student->gender ?: '');
 
-        if (file_exists(storage_path() . "/app/public/signatures/$student->id.png"))
-        {
-            $pdf->Image(storage_path() . "/app/public/signatures/$student->id.png", 55, 245, 60, 20);
-        }
-        $pdf->WriteText(37, 266, $student->printed_signature ?: '');
-        $pdf->WriteText(25, 270.5, now()->format('m/d/Y'));
+        $pdf->setFont('freesans', 'bi', '9');
+        $pdf->SetXY(16, 176);
+        $pdf->WriteCell(184, 0, config("safeds.student_type_labels.$student->type"), 0, 0, 'C');
+        $pdf->SetXY(16, 182);
+        $pdf->WriteCell(184, 0, 'Tuition: ' . money($student->charges()->latest()->first()->amount), 0, 0, 'C');
+        $pdf->SetXY(16, 187);
+        $pdf->WriteCell(184, 0, 'Balance: ' . money($student->balance), 0, 0, 'C');
 
-
-//        switch ($data['processing'])
-//        {
-//            case 'immediate_processing':
-//                if (file_exists(storage_path() . "/app/public/signatures/$student->id.png"))
-//                {
-//                    $pdf->Image(storage_path() . "/app/public/signatures/$student->id.png", 87, 70, 60, 20);
-//                }
-//                $pdf->WriteText(180, 79, now()->format('m/d/Y'));
-//                break;
-//            case 'hold_processing':
-//                if (file_exists(storage_path() . "/app/public/signatures/$student->id.png"))
-//                {
-//                    $pdf->Image(storage_path() . "/app/public/signatures/$student->id.png", 87, 77, 60, 20);
-//                }
-//                $pdf->WriteText(180, 85, now()->format('m/d/Y'));
-//                break;
-//            case 'no_processing':
-//                if (file_exists(storage_path() . "/app/public/signatures/$student->id.png"))
-//                {
-//                    $pdf->Image(storage_path() . "/app/public/signatures/$student->id.png", 87, 83, 60, 20);
-//                }
-//                $pdf->WriteText(180, 92, now()->format('m/d/Y'));
-//                break;
-//        }
+        $pdf->AddPage();
+        $pdf->useTemplate($page2);
 
         return $pdf;
     }
@@ -768,18 +843,18 @@ trait PDF_forms
     public function med_form(Student $student, $data = null): Mpdf
     {
         $pdf = new Mpdf(['default_font' => 'sans-serif', 'default_font_size' => '10']);
-        $pdf->setSourceFile('forms/lads_med_form.pdf');
+        $pdf->setSourceFile('templates/med_form.pdf');
         $template = $pdf->importPage(1);
         $pdf->useTemplate($template);
 
         $pdf->setFont('sans-serif', 'B', 10);
         $pdf->writeText(50, 37.5, $student->contract_name);
 
-        if (file_exists(storage_path() . "/app/public/signatures/$student->id.png"))
-        {
-            $pdf->Image(storage_path() . "/app/public/signatures/$student->id.png", 68, 200, 60, 20);
-        }
-        $pdf->WriteText(42, 218, $student->printed_signature ?: '');
+//        if (file_exists(storage_path() . "/app/public/signatures/$student->id.png"))
+//        {
+//            $pdf->Image(storage_path() . "/app/public/signatures/$student->id.png", 68, 200, 60, 20);
+//        }
+        //$pdf->WriteText(42, 218, $student->printed_signature ?: '');
         $pdf->WriteText(30, 223.75, Carbon::now()->format('m/d/Y'));
 
         $pdf->WriteText(65, 181, $student->parent_name ?: '');
@@ -793,37 +868,75 @@ trait PDF_forms
     {
         self::process_signature_image($student);
 
-        $pdf = self::create_pdf_file('P', 'Letter');
-        $pdf->setSourceFile('forms/lxl.pdf');
+        $classroom = Classroom::find(1);
+//        $level = number_format($data['program_level']);
+//        $level <= 4 ? $rate = $classroom->lxl_price : $rate = $classroom->lxl_discount_price;
+//        $data['add_road_test'] == 'true' ? $cost = $level * $rate + $classroom->road_test_price : $cost = $level * $rate;
+        //$pdf = new Mpdf(['default_font' => 'sans-serif', 'default_font_size' => '10', 'default_font_style' => 'b']);
+        $pdf = self::create_pdf_file();
+        $pdf->setSourceFile(public_path('/templates/btw_contract.pdf'));
         $template = $pdf->ImportPage(1);
         $pdf->useTemplate($template);
         $pdf->SetFont('freesans', 'bi', '9');
 
+        $pdf->WriteText(184, 10, strval($student->id));
+        $pdf->WriteText(184, 53.5, dateForHumans(Carbon::now()));
 
-        $pdf->WriteText(30, 50, $student->contract_name);
-        $pdf->WriteText(175, 50, $student->goes_by ?: '');
-        $pdf->WriteText(33, 60, $student->contract_address);
-        $pdf->WriteText(181, 60, $student->dob->format('m/d/Y'));
-        $pdf->WriteText(30, 69, phone($student->student_phone));
-        $pdf->WriteText(104, 69, $student->email_student ?: 'n/a');
-        $pdf->WriteText(57, 98.5, $student->permit_number ?: 'n/a');
-        $pdf->WriteText(135, 98.5, $student->display_issue_date ?: 'n/a');
-        $pdf->WriteText(165, 124, strval(Classroom::find(38)->lxl_price * 2));
-        $pdf->WriteText(128, 257.5, strval(Classroom::find(38)->lxl_price * 2));
+        $pdf->WriteText(29, 83.5, $student->display_name);
+        $pdf->WriteText(115, 83.5, $student->goes_by ?: '');
+        $pdf->WriteText(178, 83.5, $student->display_birthdate . " ($student->age)");
 
-        $pdf->addPage();
+        $pdf->WriteText(30, 94, $student->contract_address);
+        $pdf->WriteText(160, 94, $student->gender);
+//        if (array_key_exists('college', $data)) {
+//            $pdf->WriteText(41, 104, $data['college'] ?: 'College');
+//        }
+        $pdf->WriteText(135, 104, $student->neighborhood ?: '');
+//        if (array_key_exists('home_phone', $data)) {
+//            $pdf->WriteText(39, 115.25, phone($data['home_phone']));
+//        }
+        $pdf->WriteText(101, 115.25, phone($student->student_phone));
+//        if (array_key_exists('other_phone', $data)) {
+//            $pdf->WriteText(160, 115.25, phone($data['other_phone']));
+//        }
+        $pdf->WriteText(52, 125.6, $student->email_student ?: '');
+        $pdf->WriteText(55, 155, $student->parent_name ?: '');
+        $pdf->WriteText(55, 160.5, $student->parent_name_alternate ?: '');
+//        if (array_key_exists('relationship', $data)) {
+//            $pdf->WriteText(118, 155, $data['relationship'] ?: '');
+//        }
+//        if(array_key_exists('relationship_1', $data)) {
+//            $pdf->WriteText(118, 160.5, $data['relationship_1'] ?: '');
+//        }
+        $pdf->WriteText(167, 155, phone($student->phone));
+        $pdf->WriteText(167, 160.5, phone($student->secondary_phone));
+
+        $pdf->WriteText(51, 191, $student->permit_number ?: '');
+        $pdf->WriteText(118, 191, $student->display_issue_date);
+        $pdf->WriteText(178, 191, $student->eligible_date ?: '');
+
+
+//        $pdf->WriteText(80, 196.5, strval($data['program_level']) . ' Hours' ?: '');
+//        if ($data['add_road_test'] == 'true') {
+//            $pdf->WriteText(93, 196.5, '+ Skills (Road) Test');
+//        }
+        //$pdf->WriteText(113, 201, '$ ' . number_format($cost, 2));
+        //$pdf->WriteText(113, 206.5, '$ ' . number_format($cost - $student->balance, 2));
+
+
         $template2 = $pdf->ImportPage(2);
+        $pdf->addPage();
         $pdf->useTemplate($template2);
 
         if (file_exists(storage_path() . "/app/public/signatures/$student->id.png"))
         {
-            $pdf->Image(storage_path() . "/app/public/signatures/$student->id.png", 70, 115, 60, 20);
+            $pdf->Image(storage_path() . "/app/public/signatures/$student->id.png", 50 , 220, 60, 20);
         }
-        $pdf->WriteText(42, 129, $student->printed_signature ?: '');
-        $pdf->WriteText(28, 134, now()->format('m/d/Y'));
 
-        $pdf->WriteText(65, 155, $student->parent_name ?: '');
-        $pdf->WriteText(155, 155, phone($student->phone));
+        //$pdf->WriteText(120, 259, $student->printed_signature ?: '');
+
+        $pdf->WriteText(40, 246.25, $student->display_name ?: '');
+        $pdf->WriteText(28, 250.5, dateForHumans(Carbon::now()));
 
         return $pdf;
     }
@@ -953,14 +1066,14 @@ trait PDF_forms
         //$pageWidth = 279.4;
         //$pageHeight = 215.9;
         $pdf = self::create_pdf_file('L');
-        $pdf->setSourceFile('forms/roster.pdf');
+        $pdf->setSourceFile('templates/roster.pdf');
         $template = $pdf->ImportPage(1);
         $pdf->useTemplate($template);
         $pdf->SetFont('freesans', 'bi', 11);
 
         $pdf->WriteText(102, 10.75, $seminar->date->format('m/d/Y'));
         $pdf->WriteText(194, 10.75, strval($seminar->id));
-        $pdf->WriteText(102, 16.75, $seminar->employee->name);
+        $pdf->WriteText(102, 16.75, $seminar->employee->list_name);
         $pdf->WriteText(102, 22.75, $seminar->classroom->name);
 
         $lineHeight = 34.75;
@@ -969,10 +1082,10 @@ trait PDF_forms
         foreach($seminar->students as $student)
         {
             $pdf->WriteText(8, $lineHeight, strval($counter));
-            $pdf->WriteText(15, $lineHeight, $student->display_name . ' (' . strval($student->age) . ')');
+            $pdf->WriteText(15, $lineHeight, $student->display_name . ' (' . strval($student->dob->age) . ')');
             $pdf->WriteText(85, $lineHeight, strval($student->id));
-            $pdf->WriteText(107, $lineHeight, getFormattedNumber($student->balance, 'en_US', NumberFormatter::CURRENCY));
-            $pdf->WriteText(130, $lineHeight, $student->type->label());
+            $pdf->WriteText(107, $lineHeight, money($student->balance));
+            $pdf->WriteText(130, $lineHeight, $student->type);
             $pdf->WriteText(152, $lineHeight, yn($student->contract));
             $pdf->WriteText(165, $lineHeight, optional($student->zipcode)->city . '('. substr(strval($student->zip_id), -2) . ')');
             //$pdf->WriteText(197, $lineHeight, substr(strval($student->zip_id), -2));
@@ -1036,7 +1149,6 @@ trait PDF_forms
         {
             $pdf->writeText(15, $lineHeight, $lesson->start_time->format('m/d/Y'));
             $pdf->writeText(42, $lineHeight, $lesson->student->display_name ?? '');
-            $pdf->writeText(120, $lineHeight, strval($lesson->student->id) ?? '');
             $pdf->writeText(142, $lineHeight, money('200'));
             $running_balance += 200;
             $pdf->writeText(168, $lineHeight, money($running_balance));
@@ -1386,7 +1498,7 @@ trait PDF_forms
                 }
 
                 $pdf->WriteText(15, $lineHeight, $lesson->start_time->format('m/d/y'));
-                $pdf->WriteText(33, $lineHeight, optional($lesson->student)->short_contract_name . '(' . optional($lesson->student)->id . ')' ?? '');
+                $pdf->WriteText(33, $lineHeight, optional($lesson->student)->short_contract_name ?? '');
                 $pdf->WriteText(97, $lineHeight, $lesson->type ?? '');
                 $pdf->WriteText(133, $lineHeight, $lesson->start_time->format('H:i'));
                 $pdf->WriteText(158, $lineHeight, $lesson->end_time->format('H:i'));
@@ -1436,7 +1548,7 @@ trait PDF_forms
                         break;
                 }
                 $pdf->WriteText(15, $lineHeight, $lesson->start_time->format('m/d/y'));
-                $pdf->WriteText(33, $lineHeight, optional($lesson->student)->short_contract_name . '(' . optional($lesson->student)->id . ')'  ?? '');
+                $pdf->WriteText(33, $lineHeight, optional($lesson->student)->short_contract_name ?? '');
                 $pdf->WriteText(97, $lineHeight, $lesson->type ?? '');
                 $pdf->WriteText(133, $lineHeight, $lesson->start_time->format('H:i'));
                 $pdf->WriteText(158, $lineHeight, $lesson->end_time->format('H:i'));
@@ -1465,7 +1577,7 @@ trait PDF_forms
 //        $pdf->useTemplate($template);
 //        $pdf->setFont('sans-serif', 'BI', 12);
 
-        $payments = Payment::whereBetween('date',[$start->startOfDay(),$end->endOfDay()])->where('remarks','like','%Enrollment%')->with('student')->get();
+        $payments = Payment::whereBetween('date',[$start->startOfDay(),$end->endOfDay()])->where('remarks','like','%Online Registration Payment%')->with('student')->get();
         $grouped = $payments->groupBy('student.created_by');
         $counter = 1;
         foreach ($grouped as $key => $value)
@@ -1577,75 +1689,6 @@ trait PDF_forms
         return $pdf;
     }
 
-    public function yearly_income_report($year)
-    {
-        $start_date = Carbon::createFromDate($year, 1);
-
-        $end_date = Carbon::createFromDate($year, 12);
-
-        $payments = Payment::whereBetween('date', [$start_date->firstOfMonth(), $end_date->endOfMonth()])->orderBy('date')->get();
-        $filtered = $payments->reject(function ($payment) {
-            return $payment->type == 'Credit';
-        });
-
-        $grouped = $filtered->groupBy(function ($payment) {
-            return $payment->date->format('m');
-        });
-
-        $pdf = self::create_pdf_file('P', 'Letter');
-        $pdf->setFont('sans-serif', 'R', 10);
-        $pdf->AddPage();
-        $pdf->WriteText(12, 12, 'Yearly Income Report for ' . $year);
-        $lineHeight = 35;
-        $total = 0;
-        foreach ($grouped as $key => $group)
-        {
-            $total = $total + $group->sum('amount');
-            $pdf->WriteText(12, $lineHeight, $key . ": " . money($group->sum('amount')));
-            $lineHeight += 5;
-        }
-        $pdf->WriteText(12, $lineHeight+10, 'Yearly Total: ' . money($total));
-        return $pdf;
-    }
-
-    public function yearly_zipcode_report($year)
-    {
-        $start_date = Carbon::createFromDate($year, 1);
-
-        $end_date = Carbon::createFromDate($year, 12);
-
-        $payments = Payment::whereBetween('date', [$start_date->firstOfMonth(), $end_date->endOfMonth()])->orderBy('date')->get();
-        $filtered = $payments->reject(function ($payment) {
-            return $payment->type == 'Credit';
-        });
-
-        $grouped = $filtered->groupBy(function ($payment) {
-            return $payment->student->zip_id;
-        });
-
-        $pdf = self::create_pdf_file('P', 'Letter');
-        $pdf->setFont('sans-serif', 'R', 10);
-        $pdf->AddPage();
-        $pdf->WriteText(12, 12, 'Yearly Zipcode Income Report for ' . $year);
-        $lineHeight = 35;
-        $total = 0;
-        $counter = 1;
-        foreach ($grouped as $key => $group)
-        {
-            $total = $total + $group->sum('amount');
-            $pdf->WriteText(12, $lineHeight, $key . ": " . money($group->sum('amount')));
-            $lineHeight += 5;
-            $counter++;
-            if (is_int($counter/45)) {
-                $pdf->AddPage('P');
-                $lineHeight = 35;
-            }
-
-        }
-        $pdf->WriteText(12, $lineHeight+10, 'Yearly Total: ' . money($total));
-        return $pdf;
-    }
-
     public function workzone_report($start, $end)
     {
         //dd(auth()->user());
@@ -1740,8 +1783,8 @@ trait PDF_forms
     private function process_signature_image(Student $student)
     {
         if (!empty($student->signature_image)){
-            \Storage::put("public/signatures/$student->id.png", base64_decode(Str::of($student->signature_image)->after(',')));
-            imagecreatefrompng(storage_path() . "/app/public/signatures/$student->id.png");
+            \Storage::put("signatures/$student->id.png", base64_decode(Str::of($student->signature_image)->after(',')));
+            imagecreatefrompng(storage_path() . "/app/private/signatures/$student->id.png");
         }
     }
 
@@ -1750,25 +1793,29 @@ trait PDF_forms
         switch ($student->type)
         {
             case StudentTypes::COURSE_A:
+            case 'Beginner':
+            case 'Beginner Basic':
             case StudentTypes::COURSE_B:
+            case 'Beginner Plus':
             case StudentTypes::COURSE_C:
+            case 'Beginner Premium':
                 $contract = $this->beginner_contract($student, $seminar, $data);
                 break;
-            case StudentTypes::DIP:
             case StudentTypes::POINT_REDUCTION:
+            case StudentTypes::DIP:
                 $contract = $this->point_reduction_contract($student, $seminar, $data);
                 break;
-            case StudentTypes::LXL:
             case StudentTypes::LxL:
+            case StudentTypes::LXL:
                 $contract = $this->btw_contract($student, $data);
                 break;
             case StudentTypes::ROAD_TESTING:
                 $contract = $this->skills_contract($student, $data);
                 break;
-            case 'Driver Evaluation':
+            case StudentTypes::DRIVER_EVALUATION:
                 $contract = $this->driver_evaluation_contract($student, $data);
                 break;
-            case 'SC Instructor Cert':
+            case StudentTypes::INSTRUCTOR_TRAINING:
                 $contract = $this->instructor_course_contract($student, $data);
                 break;
             case 'Mature Operator':

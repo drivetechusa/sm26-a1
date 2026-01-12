@@ -13,7 +13,7 @@ If you have any problems, just give us a call.  We'd be happy to help!
 Download Instructions
 </x-mail::button>
 <br>
-<x-mail::button :url="'https://lads.drivetimes4u.com/student/login'">
+<x-mail::button :url="'https://a1.drivetimes4u.com/student/login'">
     Goto DriveTimes4U Website
 </x-mail::button>
 

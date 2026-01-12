@@ -4,21 +4,24 @@
 <x-mail::panel>
 **Student:** {{$student->firstname}} {{$student->lastname}}<br>
 **Username:** {{$student->username}}<br>
-{{--**Birthdate:** {{$student->dob->format('m/d/Y')}}--}}
+**Birthdate:** {{$student->dob->format('m/d/Y')}}
 </x-mail::panel>
 
-Using the student username ( {{$student->username}} ), please login to your account.  An email with a
-one-time passcode will be sent to all emails on the account. However, the code must be entered in the device
-that initiated the request.  All other accounts can safely disregard the email.
+    Please use the above information to make any payments online. Username is case-sensitive
+    and the formatting for the birthdate is required. After logging in, you will be presented with
+    your balance. You may pay any portion of that balance. When your balance is paid in full, we
+    will remove your account from “HOLD” status which will allow you to schedule your lessons.
 
-Enter that code to be taken to the dashboard for your account.  In the menu on the left, you will see "Make Payment".
-Click that button to be taken to the payment form.
+    1. Enter your Username and Birthdate and click "Find my records"
+    2. The left side of the next screen will display your balance due and the information we have on file for your records to make sure it is you and you didn't make a typographical error.
+    3. Enter your credit card information. You can change any of the information on the screen. Your information from your file is pre-filled for your convenience.
+    4. Enter the amount you wish to pay.
+    5. Click the "Make Payment" button
+    6. Wait until you receive an email from us showing that your account has been updated. Please allow us time to update your records. This will take longer if you submit your payment outside of our regular office hours.
 
-You may pay any portion of that balance. When your balance is paid in full, we
-will remove your account from “HOLD” status which will allow you to schedule your lessons.
 
-<x-mail::button :url="'https://alordashley.com/login'">
-Login at Website
+<x-mail::button :url="'https://a1drivingschoolsc.com/make_payment'">
+Make a Payment
 </x-mail::button>
 
 Thanks,<br>
