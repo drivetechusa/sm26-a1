@@ -213,4 +213,18 @@ class Student extends Model
     {
         return $this->hasMany(Lesson::class)->orderBy('start_time', 'asc');
     }
+    public function getIssueDateAttribute($value)
+    {
+        return $value ? Carbon::parse($value)->format('Y-m-d') : null;
+    }
+
+    public function getDisplayIssueDateAttribute()
+    {
+        if (is_null($this->issue_date)) {
+            return '';
+        } else {
+            return Carbon::createFromFormat('Y-m-d', $this->issue_date)->format('m/d/Y');
+        }
+
+    }
 }
