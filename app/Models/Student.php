@@ -30,7 +30,7 @@ class Student extends Model
             'dob' => 'date',
             'date_started' => 'date',
             'date_completed' => 'date',
-            'issue_date' => 'date',
+            'issue_date' => 'datetime',
             'renewal_date' => 'date'
         ];
     }
@@ -213,10 +213,10 @@ class Student extends Model
     {
         return $this->hasMany(Lesson::class)->orderBy('start_time', 'asc');
     }
-    public function getIssueDateAttribute($value)
-    {
-        return $value ? Carbon::parse($value)->format('Y-m-d') : null;
-    }
+//    public function getIssueDateAttribute($value)
+//    {
+//        return $value ? Carbon::parse($value)->format('Y-m-d') : null;
+//    }
 
     public function getDisplayIssueDateAttribute()
     {
