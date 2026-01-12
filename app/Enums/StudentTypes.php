@@ -11,7 +11,7 @@ enum StudentTypes : string
     case POINT_REDUCTION = 'Point Reduction';
     case INSTRUCTOR_TRAINING = 'Instructor Training';
     case DRIVER_EVALUATION = 'Driver Evaluation';
-    case ROAD_TESTING = 'Road Test Only';
+    case ROAD_TESTING = 'Skills Test Only';
     case PERMIT_TESTING = 'Permit Test Only';
     case LxL = 'LxL';
     case LADS_HAND = 'LADS Hand';
