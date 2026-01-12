@@ -9,7 +9,7 @@ class Note extends Model
 {
     /** @use HasFactory<\Database\Factories\NoteFactory> */
     use HasFactory;
-
+    protected $fillable = ['student_id', 'note', 'instructor_id','updated_by'];
     const CREATED_AT = 'created';
     const UPDATED_AT = 'last_update';
 
