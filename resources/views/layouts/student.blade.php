@@ -26,7 +26,7 @@
                     <flux:navmenu.item href="/students/{{request()->id}}/edit">Edit Student</flux:navmenu.item>
                     <flux:navmenu.item href="#">Assign Instructor</flux:navmenu.item>
                     <flux:navmenu.item href="#">Remove Instructor</flux:navmenu.item>
-                    <flux:navmenu.item href="#">Complete Student</flux:navmenu.item>
+                    <livewire:student.complete-student :id="request()->id"/>
                     <flux:navmenu.item href="#">Update DriveTimes</flux:navmenu.item>
                     <flux:navmenu.item href="#">Toggle Contract Status</flux:navmenu.item>
                     <flux:navmenu.item href="#">Toggle Permit Verification</flux:navmenu.item>
