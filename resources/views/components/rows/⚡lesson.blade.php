@@ -36,6 +36,14 @@ new class extends Component {
     {
         return Vehicle::where('active', true)->get();
     }
+
+    public function deleteLesson()
+    {
+        $this->lesson->delete();
+        Flux::modals()->close();
+        Flux::toast('Lesson removed');
+        $this->dispatch('lesson-deleted');
+    }
 };
 ?>
 
@@ -56,6 +64,9 @@ new class extends Component {
             <flux:menu>
                 <flux:modal.trigger :name="'edit-lesson-' . $lesson->id">
                     <flux:menu.item icon="pencil-square">Edit Lesson</flux:menu.item>
+                </flux:modal.trigger>
+                <flux:modal.trigger name="delete-lesson">
+                    <flux:menu.item icon="no-symbol">Delete</flux:menu.item>
                 </flux:modal.trigger>
             </flux:menu>
         </flux:dropdown>
@@ -136,6 +147,24 @@ new class extends Component {
                     </div>
                 </form>
 
+            </div>
+        </flux:modal>
+        <flux:modal name="delete-lesson" class="min-w-[22rem]">
+            <div class="space-y-6">
+                <div>
+                    <flux:heading size="lg">Delete lesson?</flux:heading>
+                    <flux:text class="mt-2">
+                        You're about to delete this lesson.<br>
+                        This action cannot be reversed.
+                    </flux:text>
+                </div>
+                <div class="flex gap-2">
+                    <flux:spacer />
+                    <flux:modal.close>
+                        <flux:button variant="ghost">Cancel</flux:button>
+                    </flux:modal.close>
+                    <flux:button wire:click="deleteLesson" variant="danger">Delete lesson</flux:button>
+                </div>
             </div>
         </flux:modal>
     </flux:table.cell>

@@ -170,7 +170,7 @@ new class extends Component {
                 <livewire:rows.scheduled-lessons :lesson="$scheduledLesson" :key="$scheduledLesson->id"/>
             @endforeach
             @foreach ($this->lessons as $lesson)
-                <livewire:rows.lesson :lesson="$lesson" :key="$lesson->id"/>
+                <livewire:rows.lesson :lesson="$lesson" :key="$lesson->id" @lesson-deleted="$refresh"/>
             @endforeach
         </flux:table.rows>
     </flux:table>
