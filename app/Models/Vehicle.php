@@ -6,6 +6,15 @@ use Illuminate\Database\Eloquent\Model;
 
 class Vehicle extends Model
 {
+    public function casts()
+    {
+        return [
+            'active' => 'boolean' ,
+            'date_purchased' => 'datetime',
+            'last_update' => 'datetime',
+            'date_sold' => 'datetime',
+        ];
+    }
 
     public function lessons()
     {
