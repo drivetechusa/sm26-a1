@@ -1073,7 +1073,7 @@ trait PDF_forms
 
         $pdf->WriteText(102, 10.75, $seminar->date->format('m/d/Y'));
         $pdf->WriteText(194, 10.75, strval($seminar->id));
-        $pdf->WriteText(102, 16.75, $seminar->employee->list_name);
+        $pdf->WriteText(102, 16.75, $seminar->employee->name);
         $pdf->WriteText(102, 22.75, $seminar->classroom->name);
 
         $lineHeight = 34.75;
@@ -1085,7 +1085,7 @@ trait PDF_forms
             $pdf->WriteText(15, $lineHeight, $student->display_name . ' (' . strval($student->dob->age) . ')');
             $pdf->WriteText(85, $lineHeight, strval($student->id));
             $pdf->WriteText(107, $lineHeight, money($student->balance));
-            $pdf->WriteText(130, $lineHeight, $student->type);
+            $pdf->WriteText(130, $lineHeight, $student->type->label());
             $pdf->WriteText(152, $lineHeight, yn($student->contract));
             $pdf->WriteText(165, $lineHeight, optional($student->zipcode)->city . '('. substr(strval($student->zip_id), -2) . ')');
             //$pdf->WriteText(197, $lineHeight, substr(strval($student->zip_id), -2));
