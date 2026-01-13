@@ -33,7 +33,7 @@ class AccountStatementEmail extends Mailable
     public function envelope(): Envelope
     {
         return new Envelope(
-            cc: 'info@alordashley.com',
+            cc: config('app.school_email'),
             subject: 'Account Statement Email',
         );
     }
