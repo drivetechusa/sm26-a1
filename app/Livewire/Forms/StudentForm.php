@@ -85,7 +85,7 @@ class StudentForm extends Form
 
     public ?string $renewal_date = null;
 
-    public ?bool $permit_verified = null;
+    public ?bool $permit_verified = false;
 
     // Driving Information
     public ?float $drive_time_purchased = null;
@@ -94,14 +94,14 @@ class StudentForm extends Form
 
     public ?int $zone_id = null;
 
-    public ?bool $home_pickup = null;
+    public ?bool $home_pickup = false;
 
     public ?int $pickup_location_id = null;
 
     // Other
     public ?string $username = null;
 
-    public ?string $contract = null;
+    public ?bool $contract = false;
 
     public function rules(): array
     {
@@ -128,7 +128,7 @@ class StudentForm extends Form
             // Address Information
             'street' => ['nullable', 'string', 'max:255'],
             'street1' => ['nullable', 'string', 'max:255'],
-            'zip_id' => ['nullable', 'integer', 'exists:zipcodes,zipcode'],
+            'zip_id' => ['nullable', 'integer', 'digits:5'],
             'neighborhood' => ['nullable', 'string', 'max:255'],
 
             // Parent/Guardian Information
@@ -165,7 +165,7 @@ class StudentForm extends Form
 
             // Other
             'username' => ['nullable', 'string', 'max:255'],
-            'contract' => ['nullable', 'string', 'max:255'],
+            'contract' => ['nullable', 'boolean', 'max:255'],
         ];
     }
 
@@ -244,10 +244,11 @@ class StudentForm extends Form
             'street', 'street1', 'zip_id', 'phone', 'secondary_phone', 'email', 'dob',
             'status', 'type', 'date_started', 'date_completed', 'permit_number',
             'issue_date', 'renewal_date', 'zone_id', 'home_pickup', 'ssn', 'username',
-            'drive_time_purchased', 'drive_time_completed', 'permit_verified', 'contract',
+            'drive_time_purchased', 'drive_time_completed', 'contract',
             'high_school', 'email_student', 'parent_name', 'parent_name_alternate',
             'student_phone', 'gender', 'goes_by', 'pickup_location_id', 'guardian_2_email',
             'neighborhood', 'instructor_id', 'parent_relationship', 'parent_alternate_relationship',
+            'permit_verified'
         ]));
     }
 

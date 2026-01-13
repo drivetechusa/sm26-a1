@@ -48,12 +48,21 @@ class extends Component
 ?>
 
 <div class="max-w-7xl mx-auto">
+    @if ($errors->any())
+        <div class="alert alert-danger">
+            <ul>
+                @foreach ($errors->all() as $error)
+                    <li>{{ $error }}</li>
+                @endforeach
+            </ul>
+        </div>
+    @endif
     <div class="mb-6">
         <flux:heading size="xl">Edit Student: {{ $student->fullName }}</flux:heading>
         <flux:subheading>Update student information below.</flux:subheading>
     </div>
 
-    <<form wire:submit="update" class="space-y-8">
+    <form wire:submit="update" class="space-y-8">
         {{-- Basic Information Section --}}
         <flux:card>
             <div>
@@ -140,7 +149,7 @@ class extends Component
 
                 <flux:field>
                     <flux:label>Zipcode</flux:label>
-                    <flux:input wire:model="form.zipcode" placeholder="29445" mask="99999" />
+                    <flux:input wire:model="form.zip_id" placeholder="29445" mask="99999" />
                     <flux:error name="form.zip_id" />
                 </flux:field>
 

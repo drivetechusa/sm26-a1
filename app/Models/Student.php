@@ -213,10 +213,7 @@ class Student extends Model
     {
         return $this->hasMany(Lesson::class)->orderBy('start_time', 'asc');
     }
-//    public function getIssueDateAttribute($value)
-//    {
-//        return $value ? Carbon::parse($value)->format('Y-m-d') : null;
-//    }
+//
 
     public function getDisplayIssueDateAttribute()
     {
