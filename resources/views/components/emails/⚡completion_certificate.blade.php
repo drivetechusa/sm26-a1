@@ -18,6 +18,12 @@ new class extends Component {
     {
         \Illuminate\Support\Facades\Mail::to($this->student->notification_emails)->send(new \App\Mail\CompletionCertificate($this->student, $this->letter));
         Flux::toast('Completion Certificate has been sent.');
+        $this->student->notes()->create([
+            'note' => 'Completion certificate emailed.',
+            'instructor_id' => auth()->id(),
+            'updated_by' => auth()->id()
+        ]);
+        $this->dispatch('note-added')->to(ref: 'student-notes-table');
     }
 };
 ?>
