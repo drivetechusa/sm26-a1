@@ -83,12 +83,14 @@ class LessonForm extends Form
     public function update(): void
     {
         $this->validate();
+        $this->start_time = $this->date . ' ' . $this->start_time;
+        $this->end_time = $this->date . ' ' . $this->end_time;
+        $this->updated_by = auth()->id();
 
         $this->lesson->update($this->only([
-            'student_id', 'type', 'employee_id', 'sessionnotes', 'start_time',
-            'end_time', 'zone_id', 'pulocation_id', 'complete', 'hide',
-            'created_by', 'updated_by', 'vehicle_id', 'begin_mileage',
-            'end_mileage', 'lesson_number',
+            'type', 'employee_id', 'start_time', 'end_time',
+            'updated_by', 'vehicle_id', 'begin_mileage',
+            'end_mileage',
         ]));
     }
 }
