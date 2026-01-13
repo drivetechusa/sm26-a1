@@ -9,7 +9,7 @@ class Charge extends Model
 {
     /** @use HasFactory<\Database\Factories\ChargeFactory> */
     use HasFactory;
-
+    protected $fillable = ['student_id', 'amount', 'entered', 'reason','updated_by','employee_id'];
     public function casts()
     {
         return [
