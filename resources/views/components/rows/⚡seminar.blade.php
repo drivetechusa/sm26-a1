@@ -54,13 +54,14 @@ new class extends Component {
                 <flux:menu.item href="/documents/roster/{{$seminar->id}}" target="_blank" icon="clipboard-document-list">Roster</flux:menu.item>
                 <flux:menu.item wire:click="completeSeminar" icon="shield-check">Class Complete</flux:menu.item>
                 <flux:menu.item href="/documents/coversheets/{{$seminar->id}}" target="_blank" icon="identification">Coversheets</flux:menu.item>
-                <flux:menu.item icon="envelope">Scheduling Instructions</flux:menu.item>
-                <flux:menu.item icon="envelope">Workbook</flux:menu.item>
-                <flux:menu.item icon="envelope">Zoom Test</flux:menu.item>
+{{--                <livewire:seminars.send-scheduling-instructions :seminar="$seminar" />--}}
+{{--                <livewire:seminars.send-workbook :seminar="$seminar" />--}}
+{{--                <livewire:seminars.send-zoom-test :seminar="$seminar" />--}}
                 <flux:menu.item href="/documents/class_logs/{{$seminar->id}}" target="_blank" icon="printer">Class Logs</flux:menu.item>
-                <flux:menu.item icon="envelope">Class Logs</flux:menu.item>
-                <flux:menu.item icon="cloud-arrow-up">To Scheduler</flux:menu.item>
-                <flux:menu.item icon="envelope">Message Class</flux:menu.item>
+                <livewire:seminars.send-class-logs :seminar="$seminar" />
+{{--                <livewire:seminars.send-to-scheduler :seminar="$seminar" />--}}
+                <livewire:seminars.send-message :seminar="$seminar" />
+
                 @unless ($seminar->students()->count() > 0)
                     <flux:menu.item wire:click='remove' icon="minus-circle">Remove Seminar</flux:menu.item>
                 @endunless

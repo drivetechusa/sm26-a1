@@ -3,12 +3,21 @@
 use App\Models\Note;
 use App\Models\Student;
 use Livewire\Attributes\Computed;
+use Livewire\Attributes\On;
 use Livewire\Attributes\Validate;
 use Livewire\Component;
 use Livewire\WithPagination;
 
 new class extends Component {
     use WithPagination;
+    public $updateTrigger = 0;
+
+    #[On('note-added')]
+    public function refreshNotes()
+    {
+        unset($this->notes);
+        $this->updateTrigger++;
+    }
 
     public Student $student;
     #[Validate('required')]
@@ -17,6 +26,8 @@ new class extends Component {
     #[Computed]
     public function notes()
     {
+        $this->updateTrigger;
+
         $query = Note::query()->where('student_id', $this->student->id);
         $query->orderBy('created', 'desc');
         return $query->paginate(7);

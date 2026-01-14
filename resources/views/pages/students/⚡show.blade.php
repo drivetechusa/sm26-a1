@@ -95,7 +95,7 @@ class extends Component {
                     <flux:tab name="enrollments" icon="presentation-chart-line">Enrollments</flux:tab>
                 </flux:tabs>
 
-                <flux:tab.panel name="notes"><livewire:student.notes :student="$this->student" /></flux:tab.panel>
+                <flux:tab.panel name="notes"><livewire:student.notes :student="$this->student" wire:ref="student-notes-table"/></flux:tab.panel>
                 <flux:tab.panel name="financials">
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-10">
                         <div><livewire:student.charges :student="$this->student" /></div>

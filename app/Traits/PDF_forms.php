@@ -515,7 +515,7 @@ trait PDF_forms
             $pdf->WriteText(50, 18, "DOB: " . $student->display_birthdate);
             $pdf->WriteText(50,26, "Gender: " . $student->gender);
             $pdf->SetXY(230, 10);
-            $pdf->WriteCell(20,0,$student->status,0,0,'r');
+            $pdf->WriteCell(20,0,$student->status->label(),0,0,'r');
             $pdf->WriteText(230, 17, $student->display_completion_date);
 
             $pdf->WriteText(245, 26, money($student->balance));
