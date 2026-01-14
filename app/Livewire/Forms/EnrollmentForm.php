@@ -18,7 +18,7 @@ class EnrollmentForm extends Form
     {
         return [
             'seminar_id' => ['required', 'integer', 'exists:seminars,id'],
-            'discount' => ['required', 'numeric', 'min:0'],
+            'discount' => ['nullable', 'numeric', 'min:0'],
             'level' => ['required', 'string', 'max:255'],
             'tuition' => ['required', 'numeric', 'min:0'],
         ];
