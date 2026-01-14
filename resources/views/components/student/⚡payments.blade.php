@@ -82,6 +82,7 @@ new class extends Component {
                         <flux:select.option>Course A Enrollment</flux:select.option>
                         <flux:select.option>Course B Enrollment</flux:select.option>
                         <flux:select.option>Course C Enrollment</flux:select.option>
+                        <flux:select.option>Road Test</flux:select.option>
                         <flux:select.option>LxL Enrollment</flux:select.option>
                         <flux:select.option>Roper Evaluation</flux:select.option>
                         <flux:select.option>LADS Hand Training</flux:select.option>
