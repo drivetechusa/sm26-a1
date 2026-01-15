@@ -24,6 +24,7 @@ class extends Component {
 
             <flux:menu>
                 <flux:menu.item href="{{route('employees.show', ['employee' => $employee])}}">Show</flux:menu.item>
+                <flux:menu.item href="/employees/{{$employee->id}}/edit" icon="pencil-square">Edit</flux:menu.item>
             </flux:menu>
         </flux:dropdown>
     </flux:table.cell>
