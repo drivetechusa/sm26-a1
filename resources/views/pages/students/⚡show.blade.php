@@ -19,8 +19,10 @@ class extends Component {
     <div class="grid auto-rows-min gap-4 md:grid-cols-3 h-[325px]">
         <div class="relative h-[300px] overflow-hidden rounded-xl border border-neutral-200 dark:border-neutral-700">
             <div class="py-3 px-2 space-y-3">
-                <x-status-badge color="{{$this->student->status->color()}}" label="{{$this->student->status->label()}}" />
-                <p class="text-xl font-extrabold text-green-600">{{$this->student->id}} / <span class="text-base font-medium">{{$this->student->stu_web_id}}</span></p>
+                <x-status-badge color="{{$this->student->status->color()}}"
+                                label="{{$this->student->status->label()}}"/>
+                <p class="text-xl font-extrabold text-green-600">{{$this->student->id}} / <span
+                        class="text-base font-medium">{{$this->student->stu_web_id}}</span></p>
                 <p class="text-xl font-bold">{{ $this->student->fullName }}</p>
                 <address>
                     {{ $this->student->address }}<br/>
@@ -38,7 +40,7 @@ class extends Component {
         </div>
         <div class="relative h-[300px] overflow-hidden rounded-xl border border-neutral-200 dark:border-neutral-700">
             <div class="py-3 px-2">
-                <x-status-badge color="{{$this->student->type->color()}}" label="{{$this->student->type->label()}}" />
+                <x-status-badge color="{{$this->student->type->color()}}" label="{{$this->student->type->label()}}"/>
                 <div class="overflow-y-scroll bg-white dark:bg-zinc-800  shadow-sm sm:rounded-lg">
                     <div class="border-t border-gray-100">
                         <dl class="divide-y divide-gray-100">
@@ -48,15 +50,18 @@ class extends Component {
                             </div>
                             <div class="px-4 py-1 sm:grid sm:grid-cols-3 sm:gap-12 sm:px-2">
                                 <dt class="text-sm font-medium text-gray-900 dark:text-zinc-400">Start | Complete</dt>
-                                <dd class="mt-1 text-sm/6 text-gray-700 dark:text-zinc-400 sm:col-span-2 sm:mt-0">{{$this->student->startDate}} | {{$this->student->completedDate}}</dd>
+                                <dd class="mt-1 text-sm/6 text-gray-700 dark:text-zinc-400 sm:col-span-2 sm:mt-0">{{$this->student->startDate}}
+                                    | {{$this->student->completedDate}}</dd>
                             </div>
                             <div class="px-4 py-1 sm:grid sm:grid-cols-3 sm:gap-12 sm:px-2">
                                 <dt class="text-sm font-medium text-gray-900 dark:text-zinc-400">Hours</dt>
-                                <dd class="mt-1 text-sm/6 text-gray-700 dark:text-zinc-400 sm:col-span-2 sm:mt-0">{{$this->student->drive_time_completed}} / {{$this->student->drive_time_purchased}}</dd>
+                                <dd class="mt-1 text-sm/6 text-gray-700 dark:text-zinc-400 sm:col-span-2 sm:mt-0">{{$this->student->drive_time_completed}}
+                                    / {{$this->student->drive_time_purchased}}</dd>
                             </div>
                             <div class="px-4 py-1 sm:grid sm:grid-cols-3 sm:gap-12 sm:px-2">
                                 <dt class="text-sm font-medium text-gray-900 dark:text-zinc-400">Permit</dt>
-                                <dd class="mt-1 text-sm/6 text-gray-700 dark:text-zinc-400 sm:col-span-2 sm:mt-0">{{$this->student->permit_number}} || {{$this->student->dateIssued}}</dd>
+                                <dd class="mt-1 text-sm/6 text-gray-700 dark:text-zinc-400 sm:col-span-2 sm:mt-0">{{$this->student->permit_number}}
+                                    || {{$this->student->dateIssued}}</dd>
                             </div>
                             <div class="px-4 py-1 sm:grid sm:grid-cols-3 sm:gap-12 sm:px-2">
                                 <dt class="text-sm font-medium text-gray-900 dark:text-zinc-400">Eligible</dt>
@@ -68,7 +73,7 @@ class extends Component {
                             </div>
                             <div class="px-4 py-1 sm:grid sm:grid-cols-3 sm:gap-12 sm:px-2">
                                 <dt class="text-sm font-medium text-gray-900 dark:text-zinc-400">Instructor</dt>
-                                <dd class="mt-1 text-sm/6 text-gray-700 dark:text-zinc-400 sm:col-span-2 sm:mt-0">{{$this->student->instructor->name ?? ''}}</dd>
+                                <dd class="mt-1 text-sm/6 text-gray-700 dark:text-zinc-400 sm:col-span-2 sm:mt-0">{{$this->student->instructor->name ?? ''}}&nbsp;&nbsp;<flux:button size="xs" icon="x-mark" variant="danger" wire:click="removeInstructor"/></dd>
                             </div>
                         </dl>
                     </div>
@@ -76,11 +81,16 @@ class extends Component {
             </div>
         </div>
         <div class="relative h-[300px] overflow-hidden rounded-xl border border-neutral-200 dark:border-neutral-700">
-            <div class="py-3 px-2">
+            <div class="py-3 px-2 space-y-3">
                 <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center">
                     <p>Balance: {{money($student->balance)}}</p>
                     <p>{{$student->username}}</p>
                 </div>
+                <p>Contract: {{yn($student->contract)}} &nbsp;&nbsp;<livewire:student.toggle-contract :id="$student->id"/></p>
+                <p>Permit: {{yn($student->permit_verified)}} &nbsp;&nbsp;<livewire:student.toggle-permit-verified :id="$student->id"/></p>
+                <p>Zone: {{optional($student->zone)->name}} &nbsp;&nbsp;<flux:button size="xs" icon="x-mark" variant="danger" wire:click="removeZone"/></p>
+                <livewire:student.update-drivetimes :student="$this->student" />
+                <livewire:student.update-status :student="$this->student" />
             </div>
         </div>
     </div>

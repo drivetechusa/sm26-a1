@@ -12,7 +12,7 @@ use Livewire\Attributes\Layout;
 use Livewire\Component;
 use App\Models\Student;
 
-new #[Layout('layouts.student')]
+new #[Layout('layouts.app')]
 class extends Component
 {
     public Student $student;

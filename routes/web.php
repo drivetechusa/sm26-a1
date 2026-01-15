@@ -32,7 +32,10 @@ Route::middleware(['auth'])->group(function () {
 
     Route::livewire('/employees', 'pages::employees.index')->name('employees.index');
     Route::livewire('/vehicles', 'pages::vehicles.index')->name('vehicles.index');
+    Route::livewire('/vehicles/create', 'pages::vehicles.create')->name('vehicles.create');
     Route::livewire('/classrooms', 'pages::classrooms.index')->name('classrooms.index');
+    Route::livewire('/classrooms/create', 'pages::classrooms.create')->name('classrooms.create');
+    Route::livewire('/classrooms/{id}/edit', 'pages::classrooms.edit')->name('classrooms.edit');
 
     Route::livewire('/seminars', 'pages::seminars.index')->name('seminars.index');
     Route::livewire('/seminars/create', 'pages::seminars.create')->name('seminars.create');
@@ -43,11 +46,16 @@ Route::middleware(['auth'])->group(function () {
     Route::livewire('/notifications', 'pages::notifications.index')->name('notifications.index');
     Route::livewire('/letters', 'pages::letters.index')->name('letters.index');
     Route::livewire('/vehicles/{vehicle}', 'pages::vehicles.show')->name('vehicles.show');
+    Route::livewire('/vehicles/{id}/edit', 'pages::vehicles.edit')->name('vehicles.edit');
+
+    Route::livewire('/employees/create', 'pages::employees.create')->name('employees.create');
     Route::livewire('/employees/{employee}', 'pages::employees.show')->name('employees.show');
+    Route::livewire('/employees/{id}/edit', 'pages::employees.edit')->name('employees.edit');
     Route::livewire('/classrooms/{classroom}', 'pages::classrooms.show')->name('classrooms.show');
     Route::livewire('/students/create', 'pages::students.create')->name('students.create');
     Route::livewire('/students/{id}', 'pages::students.show')->name('students.show');
     Route::livewire('/students/{id}/edit', 'pages::students.edit')->name('students.edit');
+    Route::livewire('/students/{id}/payment', 'pages::students.payment')->name('students.payment');
 });
 
 require __DIR__.'/documents.php';

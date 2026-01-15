@@ -19,6 +19,7 @@ new class extends Component
             <flux:button icon="ellipsis-horizontal" size="sm" variant="ghost" inset="top bottom"/>
             <flux:menu>
                 <flux:menu.item href="{{route('vehicles.show', ['vehicle' => $vehicle])}}">Show</flux:menu.item>
+                <flux:menu.item href="{{route('vehicles.edit', ['id' => $vehicle->id])}}" icon="pencil-square">Edit</flux:menu.item>
             </flux:menu>
         </flux:dropdown>
     </flux:table.cell>

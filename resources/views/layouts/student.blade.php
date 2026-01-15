@@ -19,17 +19,11 @@
             <flux:dropdown position="top" align="start">
                 <flux:navbar.item icon:trailing="chevron-down">Common Functions</flux:navbar.item>
                 <flux:navmenu>
-                    <flux:navmenu.item href="#">Send to Scheduler</flux:navmenu.item>
-                    <flux:navmenu.item href="#">Change Status</flux:navmenu.item>
-                    <flux:navmenu.item href="#">Zone Override</flux:navmenu.item>
-                    <flux:navmenu.item href="#">Remove Override</flux:navmenu.item>
-                    <flux:navmenu.item href="/students/{{request()->id}}/edit">Edit Student</flux:navmenu.item>
-                    <flux:navmenu.item href="#">Assign Instructor</flux:navmenu.item>
-                    <flux:navmenu.item href="#">Remove Instructor</flux:navmenu.item>
+                    <flux:navmenu.item href="/students/{{request()->id}}/edit" icon="pencil-square">Edit Student</flux:navmenu.item>
                     <livewire:student.complete-student :id="request()->id"/>
-                    <flux:navmenu.item href="#">Update DriveTimes</flux:navmenu.item>
-                    <flux:navmenu.item href="#">Toggle Contract Status</flux:navmenu.item>
-                    <flux:navmenu.item href="#">Toggle Permit Verification</flux:navmenu.item>
+                    <livewire:student.assign-zone :id="request()->id"/>
+                    <livewire:student.assign-instructor :id="request()->id"/>
+                    <livewire:student.send-to-scheduler :id="request()->id"/>
                 </flux:navmenu>
             </flux:dropdown>
             <flux:dropdown position="top" align="start">

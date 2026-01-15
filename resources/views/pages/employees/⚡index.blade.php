@@ -40,6 +40,7 @@ class extends Component {
         <flux:input wire:model.live.debounce.2s="search" placeholder="Search" icon="magnifying-glass"/>
 
         <flux:button wire:click="toggleActive" variant="primary">{{$this->active ? 'Archived' : 'Active'}}</flux:button>
+        <flux:button href="{{ route('employees.create') }}" variant="primary">New Employee</flux:button>
     </div>
     <div>
         <flux:table :paginate="$this->employees" >
