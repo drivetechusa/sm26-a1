@@ -38,6 +38,15 @@ new class extends Component {
         Flux::toast('Charge added.');
         Flux::modals()->close();
     }
+
+    public function removeCharge($id)
+    {
+        $charge = Charge::findOrFail($id);
+        $charge->delete();
+
+        Flux::modals()->close();
+        Flux::toast('Charge Removed');
+    }
 };
 ?>
 

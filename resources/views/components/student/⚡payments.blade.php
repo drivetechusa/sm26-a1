@@ -48,6 +48,15 @@ new class extends Component {
         Flux::toast('Payment added.');
         Flux::modals()->close();
     }
+
+    public function removePayment($id)
+    {
+        $payment = Payment::findOrFail($id);
+        $payment->delete();
+
+        Flux::modals()->close();
+        Flux::toast('Payment Removed');
+    }
 };
 ?>
 
