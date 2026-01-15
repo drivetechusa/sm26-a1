@@ -21,7 +21,7 @@
                 <flux:navmenu>
                     <flux:navmenu.item href="/students/{{request()->id}}/edit" icon="pencil-square">Edit Student</flux:navmenu.item>
                     <livewire:student.complete-student :id="request()->id"/>
-                    <livewire:student.assign-zone :id="request()->id"/>
+{{--                    <livewire:student.assign-zone :id="request()->id"/>--}}
                     <livewire:student.assign-instructor :id="request()->id"/>
                     <livewire:student.send-to-scheduler :id="request()->id"/>
                 </flux:navmenu>
