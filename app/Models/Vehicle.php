@@ -9,10 +9,12 @@ class Vehicle extends Model
     public function casts()
     {
         return [
-            'active' => 'boolean' ,
-            'date_purchased' => 'datetime',
-            'last_update' => 'datetime',
-            'date_sold' => 'datetime',
+            'active' => 'boolean',
+            'date_purchased' => 'date',
+            'date_sold' => 'date',
+            'mileage' => 'decimal:1',
+            'purchase_price' => 'decimal:2',
+            'selling_price' => 'decimal:2',
         ];
     }
 
@@ -23,5 +25,10 @@ class Vehicle extends Model
     public function getCurrentMileageAttribute()
     {
         return $this->lessons()->max('end_mileage');
+    }
+
+    public function maintenances()
+    {
+        return $this->hasMany(Maintenance::class);
     }
 }

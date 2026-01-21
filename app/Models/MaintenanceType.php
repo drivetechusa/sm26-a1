@@ -9,4 +9,6 @@ class MaintenanceType extends Model
 {
     /** @use HasFactory<\Database\Factories\MaintenanceTypeFactory> */
     use HasFactory;
+
+    protected $table = 'maintenancetypes';
 }
