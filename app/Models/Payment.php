@@ -19,4 +19,9 @@ class Payment extends Model
             'amount' => 'float',
         ];
     }
+
+    public function student()
+    {
+        return $this->belongsTo(Student::class);
+    }
 }

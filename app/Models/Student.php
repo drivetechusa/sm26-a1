@@ -132,6 +132,11 @@ class Student extends Model
         return $this->hasMany(Lesson::class);
     }
 
+    public function tpttests()
+    {
+        return $this->hasMany(Tpttest::class);
+    }
+
 
     public function Zipcode()
     {

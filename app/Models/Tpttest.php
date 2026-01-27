@@ -23,4 +23,9 @@ class Tpttest extends Model
             'complete' => 'boolean',
         ];
     }
+
+    public function student()
+    {
+        return $this->belongsTo(Student::class);
+    }
 }

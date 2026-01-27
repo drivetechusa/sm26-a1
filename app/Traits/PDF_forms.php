@@ -1614,9 +1614,9 @@ trait PDF_forms
                         break;
                 }
                 $pdf->WriteText(10, $lineHeight, $pay->date->format('m/d/y'));
-                $pdf->WriteText(38, $lineHeight, $pay->student->short_contract_name);
+                $pdf->WriteText(38, $lineHeight, $pay->student->display_name);
                 $pdf->WriteText(108, $lineHeight, strval($pay->student->id));
-                $pdf->WriteText(130, $lineHeight, $pay->student->type ?: '');
+                $pdf->WriteText(130, $lineHeight, $pay->student->type->label() ?: '');
                 $pdf->WriteText(164, $lineHeight, money($pay->amount));
                 $lineHeight += 5.1;
 
