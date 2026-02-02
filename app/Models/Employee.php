@@ -7,10 +7,43 @@ use Illuminate\Support\Str;
 
 class Employee extends Authenticatable
 {
+    protected $fillable = [
+        'firstname',
+        'middlename',
+        'lastname',
+        'namesuffix',
+        'street',
+        'street1',
+        'zip_id',
+        'phone',
+        'secondary_phone',
+        'email',
+        'dob',
+        'ssn',
+        'hire_date',
+        'term_date',
+        'dl_license',
+        'dl_expire',
+        'inst_license',
+        'school_id',
+        'user_level',
+        'active',
+        'cdtp_instructor_number',
+        'username',
+        'password',
+        'scheduler_id',
+        'sched_instructor_id',
+        'vehicle_id',
+    ];
+
     protected function casts(): array
     {
         return [
             'active' => 'boolean',
+            'dob' => 'date',
+            'hire_date' => 'date',
+            'term_date' => 'date',
+            'dl_expire' => 'date',
         ];
     }
 
@@ -26,5 +59,10 @@ class Employee extends Authenticatable
     public function getNameAttribute(): string
     {
         return "{$this->lastname}, {$this->firstname}";
+    }
+
+    public function scopeActive($query)
+    {
+        return $query->where('active', 1);
     }
 }
