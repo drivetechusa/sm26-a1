@@ -10,7 +10,7 @@ use App\Models\Lesson;
 use App\Models\Payment;
 use App\Models\Seminar;
 use App\Models\Student;
-use App\Models\TptTest;
+use App\Models\Tpttest;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Auth;
