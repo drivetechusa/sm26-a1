@@ -39,7 +39,7 @@ new class extends Component {
     public function seminarOptions()
     {
         $query = Seminar::query()->where('date','>',today()->subMonth());
-        return $query->get();
+        return $query->orderBy('date','asc')->get();
     }
 
 };
