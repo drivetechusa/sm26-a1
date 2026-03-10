@@ -24,6 +24,7 @@
 {{--                    <livewire:student.assign-zone :id="request()->id"/>--}}
                     <livewire:student.assign-instructor :id="request()->id"/>
                     <livewire:student.send-to-scheduler :id="request()->id"/>
+                    <livewire:student.delete-student :id="request()->id"/>
                 </flux:navmenu>
             </flux:dropdown>
             <flux:dropdown position="top" align="start">

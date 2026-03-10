@@ -35,6 +35,20 @@ class Student extends Model
         ];
     }
 
+    protected static function boot()
+    {
+        parent::boot();
+
+        static::deleting(function ($student) {
+            $student->lessons()->delete();
+            $student->charges()->delete();
+            $student->payments()->delete();
+            $student->notes()->delete();
+            $student->seminars()->detach();
+            $student->tpts()->delete();
+        });
+    }
+
     public function getFullNameAttribute()
     {
         $name = $this->lastname;
@@ -228,5 +242,10 @@ class Student extends Model
             return Carbon::createFromFormat('Y-m-d', $this->issue_date)->format('m/d/Y');
         }
 
+    }
+
+    public function tpts()
+    {
+        return $this->hasMany(Tpttest::class);
     }
 }
