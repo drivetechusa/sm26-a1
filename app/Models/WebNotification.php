@@ -11,4 +11,6 @@ class WebNotification extends Model
     use HasFactory;
 
     protected $table = 'notifications';
+
+    protected $fillable = ['message', 'is_active'];
 }

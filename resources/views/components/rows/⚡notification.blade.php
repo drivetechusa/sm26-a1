@@ -18,7 +18,7 @@ new class extends Component {
         $this->is_active = $this->notification->is_active;
     }
 
-    public function updateNotification()
+    public function updateNotification(): void
     {
         $this->notification->message = $this->message;
         $this->notification->is_active = $this->is_active;
@@ -26,6 +26,14 @@ new class extends Component {
 
         Flux::modals()->close();
         Flux::toast('Notification updated.');
+    }
+
+    public function remove(): void
+    {
+        abort_if($this->notification->is_active, 403, 'Cannot delete an active notification.');
+
+        $this->notification->delete();
+        $this->dispatch('notification-removed');
     }
 };
 ?>
@@ -43,8 +51,11 @@ new class extends Component {
 
             <flux:menu>
                 <flux:modal.trigger :name="'edit-notification-' . $notification->id">
-                    <flux:menu.item>Edit letter</flux:menu.item>
+                    <flux:menu.item>Edit notification</flux:menu.item>
                 </flux:modal.trigger>
+                @if (!$notification->is_active)
+                    <flux:menu.item wire:click="remove" wire:confirm="Are you sure you want to delete this notification?" icon="trash">Delete</flux:menu.item>
+                @endif
             </flux:menu>
         </flux:dropdown>
         <flux:modal :name="'edit-notification-' . $notification->id" class="md:w-1/3">

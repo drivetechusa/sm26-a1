@@ -17,7 +17,8 @@ class WebNotificationFactory extends Factory
     public function definition(): array
     {
         return [
-            //
+            'message' => fake()->sentence(),
+            'is_active' => fake()->boolean(),
         ];
     }
 }
