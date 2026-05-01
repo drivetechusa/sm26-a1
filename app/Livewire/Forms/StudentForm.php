@@ -238,6 +238,7 @@ class StudentForm extends Form
     public function store(): Student
     {
         $this->validate();
+        $this->normalizeDates();
 
         return Student::create($this->only([
             'stu_web_id', 'school_id', 'firstname', 'middlename', 'lastname', 'suffix',
@@ -248,13 +249,14 @@ class StudentForm extends Form
             'high_school', 'email_student', 'parent_name', 'parent_name_alternate',
             'student_phone', 'gender', 'goes_by', 'pickup_location_id', 'guardian_2_email',
             'neighborhood', 'instructor_id', 'parent_relationship', 'parent_alternate_relationship',
-            'permit_verified'
+            'permit_verified',
         ]));
     }
 
     public function update(): void
     {
         $this->validate();
+        $this->normalizeDates();
 
         $this->student->update($this->only([
             'stu_web_id', 'school_id', 'firstname', 'middlename', 'lastname', 'suffix',
@@ -266,5 +268,14 @@ class StudentForm extends Form
             'student_phone', 'gender', 'goes_by', 'pickup_location_id', 'guardian_2_email',
             'neighborhood', 'instructor_id', 'parent_relationship', 'parent_alternate_relationship',
         ]));
+    }
+
+    private function normalizeDates(): void
+    {
+        foreach (['dob', 'date_started', 'date_completed', 'issue_date', 'renewal_date'] as $field) {
+            if ($this->{$field} === '') {
+                $this->{$field} = null;
+            }
+        }
     }
 }
