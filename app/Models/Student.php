@@ -4,8 +4,6 @@ namespace App\Models;
 
 use App\Enums\StudentStatus;
 use App\Enums\StudentTypes;
-use App\Livewire\Forms\SeminarForm;
-use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
@@ -15,11 +13,11 @@ class Student extends Model
     use HasFactory;
 
     protected $fillable = [
-        'stu_web_id', 'school_id','firstname','middlename','lastname','suffix','street','street1','zip_id', 'phone','secondary_phone',
-        'email', 'dob','status','type','date_started','date_completed','permit_number', 'issue_date','renewal_date', 'zone_id','home_pickup',
-        'ssn', 'username', 'drive_time_purchased','drive_time_completed','permit_verified','contract','high_school','email_student','parent_name',
-        'parent_name_alternate', 'student_phone','gender','goes_by','pickup_location_id','guardian_2_email','neighborhood','instructor_id','parent_relationship',
-        'parent_alternate_relationship'
+        'stu_web_id', 'school_id', 'firstname', 'middlename', 'lastname', 'suffix', 'street', 'street1', 'zip_id', 'phone', 'secondary_phone',
+        'email', 'dob', 'status', 'type', 'date_started', 'date_completed', 'permit_number', 'issue_date', 'renewal_date', 'zone_id', 'home_pickup',
+        'ssn', 'username', 'drive_time_purchased', 'drive_time_completed', 'permit_verified', 'contract', 'high_school', 'email_student', 'parent_name',
+        'parent_name_alternate', 'student_phone', 'gender', 'goes_by', 'pickup_location_id', 'guardian_2_email', 'neighborhood', 'instructor_id', 'parent_relationship',
+        'parent_alternate_relationship',
     ];
 
     public function casts()
@@ -31,7 +29,7 @@ class Student extends Model
             'date_started' => 'date',
             'date_completed' => 'date',
             'issue_date' => 'datetime',
-            'renewal_date' => 'date'
+            'renewal_date' => 'date',
         ];
     }
 
@@ -52,16 +50,18 @@ class Student extends Model
     public function getFullNameAttribute()
     {
         $name = $this->lastname;
-        $this->suffix ? $name = $name . ' ' . $this->suffix : $name;
-        $name = $name . ', ' . $this->firstname;
-        $this->middlename ? $name = $name . ' ' . $this->middlename : $name;
+        $this->suffix ? $name = $name.' '.$this->suffix : $name;
+        $name = $name.', '.$this->firstname;
+        $this->middlename ? $name = $name.' '.$this->middlename : $name;
+
         return strtoupper($name);
     }
 
     public function getAddressAttribute()
     {
         $address = $this->street;
-        $this->street1 ? $address = $address . ', ' . $this->street1 : $address;
+        $this->street1 ? $address = $address.', '.$this->street1 : $address;
+
         return $address;
     }
 
@@ -114,7 +114,8 @@ class Student extends Model
     public function getEligibleDateAttribute()
     {
         if ($this->issue_date instanceof \Carbon\Carbon) {
-            $eligible = clone($this->issue_date)->addDays(181);
+            $eligible = clone ($this->issue_date)->addDays(181);
+
             return "{$eligible->format('m/d/Y')}";
         } else {
             return '';
@@ -138,7 +139,7 @@ class Student extends Model
 
     public function seminars()
     {
-        return $this->belongsToMany(Seminar::class, 'seminar_student')->using(SeminarStudent::class)->withPivot('level','discount','tuition')->orderBy('date', 'desc');
+        return $this->belongsToMany(Seminar::class, 'seminar_student')->using(SeminarStudent::class)->withPivot('level', 'discount', 'tuition')->orderBy('date', 'desc');
     }
 
     public function lessons()
@@ -150,7 +151,6 @@ class Student extends Model
     {
         return $this->hasMany(Tpttest::class);
     }
-
 
     public function Zipcode()
     {
@@ -174,7 +174,7 @@ class Student extends Model
 
     public function getNotificationEmailsAttribute($value)
     {
-        $emails = array();
+        $emails = [];
         if ($this->email_student) {
             array_push($emails, $this->email_student);
         }
@@ -187,6 +187,7 @@ class Student extends Model
 
         return $emails;
     }
+
     public function getDisplayNameAttribute()
     {
         return "{$this->lastname}, {$this->firstname}";
@@ -196,14 +197,15 @@ class Student extends Model
     {
         return $this->dob->age;
     }
+
     public function getDisplayCompletionDateAttribute()
     {
         return optional($this->date_completed)->format('m/d/y') ?: '';
     }
+
     public function getContractNameAttribute()
     {
-        if (!empty($this->middlename))
-        {
+        if (! empty($this->middlename)) {
             return "{$this->firstname} {$this->lastname} {$this->suffix}";
         } else {
             return "{$this->firstname} {$this->middlename} {$this->lastname} {$this->suffix}";
@@ -220,6 +222,7 @@ class Student extends Model
     {
         $payments = $this->payments()->sum('amount');
         $charges = $this->charges()->sum('amount');
+
         return $charges - $payments;
     }
 
@@ -232,16 +235,11 @@ class Student extends Model
     {
         return $this->hasMany(Lesson::class)->orderBy('start_time', 'asc');
     }
-//
+    //
 
     public function getDisplayIssueDateAttribute()
     {
-        if (is_null($this->issue_date)) {
-            return '';
-        } else {
-            return Carbon::createFromFormat('Y-m-d', $this->issue_date)->format('m/d/Y');
-        }
-
+        return optional($this->issue_date)->format('m/d/Y') ?: '';
     }
 
     public function tpts()
